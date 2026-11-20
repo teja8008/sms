@@ -1,0 +1,26 @@
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #142740;
+  background: #f4f7fc;
+}
+
+body {
+  margin: 0;
+}
+
+.home {
+  max-width: 64rem;
+  margin: clamp(2rem, 8vw, 6rem) auto;
+  padding: 0 1.5rem;
+}
+
+.home h1 {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  letter-spacing: -0.045em;
+}
+
+.home p {
+  margin: 0.5rem 0 0;
+  color: #475975;
+}

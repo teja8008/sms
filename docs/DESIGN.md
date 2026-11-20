@@ -2,11 +2,11 @@
 
 ## Application boundary
 
-One Rails 8 application serves the HTML page, JavaScript assets, and JSON API. React components in `app/javascript/` render the directory, salary form, and insights. They call the API at relative URLs such as `/api/v1/employees`.
+Rails 8 provides the backend and JSON API. React components in `frontend/src/` use JSX for the directory, salary form, and insights. They call relative API URLs such as `/api/v1/employees`.
 
-**Local development.** With PostgreSQL running, start the app with `bundle exec rails server` and open `http://localhost:3000`. Rails import maps tell the browser where to load the locally pinned React and React DOM modules. Components use plain JavaScript and `createElement`, so the browser can run them directly.
+**Local development.** Start PostgreSQL and run `bundle exec rails server` from the repository root. Run `npm run dev` from `frontend/` in a second terminal. Open Vite at `http://localhost:5173`. Vite proxies `/api` to Rails on port 3000.
 
-**Deployment.** Use a native Ruby web service. Run `bundle exec rails assets:precompile` in the production environment to prepare the versioned assets. Start Rails with `bundle exec rails server -e production -b 0.0.0.0 -p "$PORT"`, using the port assigned by the host. Neon PostgreSQL stores the synthetic demo data and preserves reviewer edits across server restarts.
+**Deployment.** In a build environment with Node.js and Ruby, run `npm --prefix frontend ci` and `npm --prefix frontend run build`. Vite writes versioned assets under `public/frontend/`. Start Rails with `bundle exec rails server -e production -b 0.0.0.0 -p "$PORT"`, using the port assigned by the host. Rails serves the built UI and API on one origin. Neon PostgreSQL stores the synthetic demo data and preserves reviewer edits across server restarts.
 
 ## Data model
 

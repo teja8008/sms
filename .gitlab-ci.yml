@@ -1,0 +1,38 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+frontend:
+  stage: build
+  image: node:22-bookworm-slim
+  script:
+    - npm --prefix frontend ci
+    - npm --prefix frontend run build
+  artifacts:
+    paths:
+      - public/frontend/
+
+checks:
+  stage: test
+  image: ruby:4.0-bookworm
+  needs: [frontend]
+  services:
+    - name: postgres:18
+      alias: postgres
+  variables:
+    RAILS_ENV: test
+    POSTGRES_DB: acme_comp_scope_test
+    POSTGRES_USER: acme_ci
+    POSTGRES_PASSWORD: ci_only
+    DATABASE_URL: postgresql://acme_ci:ci_only@postgres:5432/acme_comp_scope_test
+    BUNDLE_FROZEN: "true"
+    CHROME_BIN: /usr/bin/chromium
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends chromium chromium-driver
+    - bundle install
+  script:
+    - bundle exec rubocop
+    - bundle exec rails db:migrate
+    - bundle exec rspec

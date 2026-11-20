@@ -1,0 +1,17 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  host: <%= ENV.fetch("PGHOST", "127.0.0.1") %>
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+
+development:
+  <<: *default
+  database: acme_comp_scope_development
+
+test:
+  <<: *default
+  database: acme_comp_scope_test
+
+production:
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>

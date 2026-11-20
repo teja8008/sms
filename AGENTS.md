@@ -10,7 +10,7 @@
 
 ## Application conventions
 
-- Use Rails, PostgreSQL, and plain JavaScript React loaded through Rails import maps. Keep components in `app/javascript/`, HTTP handling in controllers, multi-step writes in `app/services/`, and reporting queries in `app/queries/`.
+- Use Rails, PostgreSQL, and Vite with React in JavaScript. Keep JSX components in `frontend/src/`, HTTP handling in Rails controllers, multi-step writes in `app/services/`, and reporting queries in `app/queries/`.
 - Store annual salaries as `NUMERIC(14,2)` and use decimal arithmetic. Send money as decimal strings with ISO currency codes. Use local currency for one country and seeded USD rates for cross-country totals. Round for display.
 - Update current pay and append its revision in one transaction. Handle conflicting edits explicitly and preserve revision history when an employee becomes inactive.
 - Run search, filtering, pagination, and analytics in PostgreSQL. Measure queries against the 10,000-employee seed before adding indexes or caching. Keep this benchmark separate from the fast spec suite.

@@ -10,10 +10,12 @@ docs/Requirement.txt
 !/storage/.keep
 /db/*.sqlite3
 /db/*.sqlite3-journal
+/config/master.key
 .byebug_history
 
 # Generated assets and local dependencies
 /public/assets/
+/public/frontend/
 node_modules/
 dist/
 
