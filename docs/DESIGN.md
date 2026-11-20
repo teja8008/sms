@@ -21,7 +21,7 @@ erDiagram
 | --- | --- |
 | `exchange_rates` | ISO currency code as primary key and a positive `NUMERIC(12,6)` rate expressed as USD per local unit. Seed one fixed rate per supported currency, with USD equal to 1. |
 | `employees` | Unique employee code and email, name, country, department, title, level, hire date, status, current annual salary, and currency. Salary is positive `NUMERIC(14,2)`. Foreign keys enforce valid currencies. |
-| `salary_revisions` | Employee, previous and new salary, currency, reason, effective date, and creation time. An opening revision has no previous salary. Later revisions are append-only. |
+| `salary_revisions` | Employee, previous and new salary, currency, reason, effective date, and creation time. At most one revision per employee can omit the previous salary. That row records the opening salary. Rails treats persisted revisions as read-only. |
 
 ### Exchange rate direction
 
@@ -65,7 +65,7 @@ salary_revisions
   previous_salary NUMERIC(14,2)             -- NULL for opening revision
   new_salary      NUMERIC(14,2)  NOT NULL
   currency_code   VARCHAR  FK → exchange_rates
-  reason          VARCHAR
+  reason          VARCHAR  NOT NULL
   effective_date  DATE     NOT NULL
   created_at      TIMESTAMP
 ```
@@ -77,6 +77,7 @@ salary_revisions
 | `idx_employees_on_status` | `status` | Filter active employees for analytics and directory |
 | `idx_employees_on_country_dept_level` | `country_code, department, job_level` | Composite filter for directory and grouped analytics |
 | `idx_salary_revisions_on_employee_id` | `employee_id` | Fast lookup of an employee's revision history |
+| `idx_salary_revisions_one_opening` | Unique `employee_id` where `previous_salary IS NULL` | Prevent duplicate opening revisions |
 
 ## API and consistency
 
@@ -91,10 +92,10 @@ The salary write locks the employee row, checks the revision ID, validates the a
 
 ## Money and reporting
 
-Store money as decimals and serialize amounts as strings in JSON. Reject salary inputs with more than two decimal places. For global spend, sum each active employee's local salary multiplied by its USD rate, then round the displayed total. Country rows carry local and USD figures. Department/level ranges use local currency within one country and USD across countries.
+Store money as decimals and serialize amounts as strings in JSON. Validate salary input before Active Record rounds to cents. PostgreSQL rejects nonpositive pay and rates, including numeric `NaN`. For global spend, sum each active employee's local salary multiplied by its USD rate, then round the displayed total. Country rows carry local and USD figures. Department/level ranges use local currency within one country and USD across countries.
 
 PostgreSQL computes counts, sums, and medians on the filtered rows. For example, a test group earning USD 60,000 and INR 2,000,000 at 0.012 USD per INR has USD 84,000 in spend and a USD 42,000 median. This checks both rate direction and the mean of the two middle salaries. An empty group has zero spend and no median.
 
 ## Verification and scale
 
-Use hand-calculated RSpec fixtures for FX, medians, effective dates, stale edits, and rollback. Use focused RSpec system specs with a JavaScript-enabled browser to check the currency shown and the salary form's response to invalid input. Bulk-seed 10,000 employees with a fixed random seed and stable employee codes. Verify a rerun preserves reviewer edits. Start with the three indexes listed above and measure seed time against the five-second target and time directory and insights queries on the full dataset before tuning.
+Use hand-calculated RSpec fixtures for FX, medians, effective dates, stale edits, and rollback. Use focused RSpec system specs with a JavaScript-enabled browser to check the currency shown and the salary form's response to invalid input. Bulk-seed 10,000 employees with a fixed random seed and stable employee codes. Verify a rerun preserves reviewer edits. Measure seed time against the five-second target and time directory and insights queries on the full dataset before tuning indexes.

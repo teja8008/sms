@@ -7,5 +7,6 @@ require "rspec/rails"
 ActiveRecord::Migration.maintain_test_schema!
 
 RSpec.configure do |config|
+  config.include FactoryBot::Syntax::Methods
   config.use_transactional_fixtures = true
 end
