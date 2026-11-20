@@ -1,0 +1,40 @@
+# Assessment prompt (local reference only)
+docs/Requirement.txt
+
+# Rails
+/log/*
+/tmp/*
+/storage/*
+!/log/.keep
+!/tmp/.keep
+!/storage/.keep
+/db/*.sqlite3
+/db/*.sqlite3-journal
+.byebug_history
+
+# Generated assets and local dependencies
+/public/assets/
+node_modules/
+dist/
+
+# Local environment
+.env
+.env*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Bundle
+/vendor/bundle
+/.bundle
+
+# Coverage
+/coverage/
