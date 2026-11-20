@@ -15,3 +15,7 @@ After reviewing the frontend workflow, we chose Vite and JSX for the employee sc
 ## Phase B — Compensation data model
 
 AI drafted the migration and model specs from the design. We added examples that bypass Rails validations to check PostgreSQL's unique keys, foreign keys, and salary constraints. We also checked that an employee can have one opening revision and later revisions while existing revisions stay read-only through Rails record methods. We verified the migration could roll back and reapply and ran the full test suite.
+
+## Phase B — Demo data
+
+AI drafted the batched seed and its tests. We used PostgreSQL's returned rows to create opening revisions only for employees inserted in the same transaction. We verified that a failed revision write rolls back its employee batch and that rerunning the full 10,000-employee seed preserves an edited salary and its revision history.

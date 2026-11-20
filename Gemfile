@@ -4,6 +4,7 @@ gem "rails", "~> 8.1.0"
 gem "pg", "~> 1.5"
 gem "puma", ">= 6.0"
 gem "tzinfo-data", platforms: %i[windows jruby]
+gem "fiddle", platforms: %i[windows]
 
 group :development, :test do
   gem "rspec-rails", "~> 8.0"

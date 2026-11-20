@@ -34,6 +34,16 @@ npm run dev
 
 Open <http://localhost:5173>. Vite reloads React changes and proxies `/api` requests to Rails on port 3000. On Windows PowerShell, use `npm.cmd` for these commands if script execution is disabled.
 
+## Load demo data
+
+Run this from the repository root after migrating the database.
+
+```sh
+bundle exec rails db:seed
+```
+
+On an empty database, the seed creates 10,000 synthetic employees across six countries and one opening salary revision for each employee. Rerunning it inserts missing demo employees with their opening revisions and preserves existing salaries, rates, and history.
+
 ## Run checks
 
 Install Chrome for the browser smoke test. Selenium can download the matching ChromeDriver on the first run. On Linux, you can use Chromium and its matching driver on `PATH` and set `CHROME_BIN` to the Chromium executable.
