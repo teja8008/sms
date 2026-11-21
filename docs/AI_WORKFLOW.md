@@ -19,3 +19,7 @@ AI drafted the migration and model specs from the design. We added examples that
 ## Phase B — Demo data
 
 AI drafted the batched seed and its tests. We used PostgreSQL's returned rows to create opening revisions only for employees inserted in the same transaction. We verified that a failed revision write rolls back its employee batch and that rerunning the full 10,000-employee seed preserves an edited salary and its revision history.
+
+## Phase B — Employee directory
+
+AI drafted the query and API specs before implementing the directory. We verified that search treats wildcard characters literally and that equal names retain a stable order across pages. The browser test checked search, filtering, salary history, and the return to the same results. With 10,000 employees, the 25-row and 100-row pages both used five employee queries.

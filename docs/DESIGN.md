@@ -74,7 +74,7 @@ salary_revisions
 
 | Index | Columns | Rationale |
 |-------|---------|-----------|
-| `idx_employees_on_status` | `status` | Filter active employees for analytics and directory |
+| `idx_employees_on_status` | `status` | Filter active employees for analytics |
 | `idx_employees_on_country_dept_level` | `country_code, department, job_level` | Composite filter for directory and grouped analytics |
 | `idx_salary_revisions_on_employee_id` | `employee_id` | Fast lookup of an employee's revision history |
 | `idx_salary_revisions_one_opening` | Unique `employee_id` where `previous_salary IS NULL` | Prevent duplicate opening revisions |
@@ -83,10 +83,12 @@ salary_revisions
 
 | Route | Responsibility |
 | --- | --- |
-| `GET /api/v1/employees` | Search name, email, or code. Apply country, department, and level filters in SQL and paginate in stable name and ID order. |
-| `GET /api/v1/employees/:id` | Return current pay and revisions, newest first, including the latest revision ID. |
+| `GET /api/v1/employees` | Case-insensitive substring search by name, email, or code through `q`. Combine `country`, `department`, and `job_level` filters in SQL. Return employees, pagination, and directory-wide filter options. |
+| `GET /api/v1/employees/:id` | Return the employee's current pay, hire date, and revisions ordered by effective date, creation time, and ID, newest first. Return `latest_revision_id` as `null` when history is empty. |
 | `PATCH /api/v1/employees/:id/salary` | Accept a decimal amount in the current currency, reason, effective date, and the revision ID the editor saw. |
 | `GET /api/v1/analytics` | Return filtered active headcount, spend, country breakdowns, and department/level ranges. |
+
+The directory accepts `sort` values `name`, `employee_code`, `department`, and `job_level`, plus `direction=asc` or `desc`. The default is ascending name, and all sorts break ties by ascending employee ID. Pagination starts at page 1 with 25 records per page and accepts up to 100. Invalid sort or pagination parameters return 400. An unknown employee ID returns 404.
 
 The salary write locks the employee row, checks the revision ID, validates the amount and date, then updates the employee and appends a revision in one transaction. A stale editor gets HTTP 409 and can reload the latest salary. Invalid input gets 422. A failed revision insert rolls back the salary update. Same-day revisions use creation time and ID to establish order.
 
@@ -101,3 +103,5 @@ PostgreSQL computes counts, sums, and medians on the filtered rows. For example,
 Use hand-calculated RSpec fixtures for FX, medians, effective dates, stale edits, and rollback. Use focused RSpec system specs with a JavaScript-enabled browser to check the currency shown and the salary form's response to invalid input. Bulk-seed 10,000 employees with a fixed random seed and stable employee codes. Verify a rerun preserves reviewer edits. Measure seed time against the five-second target and time directory and insights queries on the full dataset before tuning indexes.
 
 The seed uses batches of 500. Each transaction inserts opening revisions for the employees returned by that batch's insert. On Windows with Ruby 4.0.9 and local PostgreSQL 18, the seed body took 2.09 seconds on a fresh database. The full `rails db:seed` command took 5.88 seconds on the first run and 5.19 seconds on the rerun, including Rails startup.
+
+With 10,000 seeded employees in the same environment, the median of five warm in-process Rails requests was 19.60 ms for 25 rows, 18.96 ms for 100 rows, 20.68 ms for an employee-code search, and 14.09 ms for combined country, department, and level filters. Each measured request used five employee queries for the count, page, and shared filter options.

@@ -1,6 +1,6 @@
 # ACME CompScope
 
-Employee salary management for ACME HR. The scaffold has a Vite React frontend and a Rails backend.
+Employee salary management for ACME HR. Search the employee directory and open a profile to review annual base pay and salary history.
 
 ## Run locally
 
@@ -55,7 +55,7 @@ bundle exec rubocop
 bundle exec rspec
 ```
 
-Run these commands from the repository root. The build writes to `public/frontend/`. The browser spec visits Rails and renders that compiled React page. GitLab CI builds the same artifact, then runs RuboCop, PostgreSQL migrations, and RSpec with headless Chromium.
+Run these commands from the repository root. The build writes to `public/frontend/`. The browser spec searches the compiled directory served by Rails and opens an employee's salary history. GitLab CI builds the same artifact, then runs RuboCop, PostgreSQL migrations, and RSpec with headless Chromium.
 
 To preview the deployment layout locally, build the frontend and open <http://localhost:3000> with Rails running.
 
