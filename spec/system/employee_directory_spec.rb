@@ -1,6 +1,22 @@
 require "rails_helper"
 
 RSpec.describe "Employee directory", type: :system do
+  it "links the logo to the directory and serves the browser tab icon" do
+    visit "/insights"
+
+    find("a[aria-label='ACME CompScope home']").click
+    expect(page).to have_current_path("/employees")
+    expect(page).to have_css("h1", text: "Employee directory")
+    expect(page).to have_css("link[rel='icon']", visible: :all)
+    expect(page.evaluate_async_script(<<~JS)).to be(true)
+      const done = arguments[0];
+      const icon = new Image();
+      icon.onload = () => done(true);
+      icon.onerror = () => done(false);
+      icon.src = document.querySelector("link[rel='icon']").href;
+    JS
+  end
+
   it "finds and opens an employee while preserving the directory search" do
     employee = create(:salary_revision).employee
     create(:employee, exchange_rate: employee.exchange_rate, full_name: "Avery Chen", department: "Finance")

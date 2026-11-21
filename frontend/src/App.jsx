@@ -22,10 +22,10 @@ export default function App() {
     <>
       <header className="app-header">
         <div className="app-header-content">
-          <div className="app-brand">
+          <Link className="app-brand" to="/employees" onClick={() => setDirectoryFilters(DEFAULT_DIRECTORY_FILTERS)} aria-label="ACME CompScope home">
             <span className="app-mark" aria-hidden="true">A</span>
             <span>ACME <strong>CompScope</strong></span>
-          </div>
+          </Link>
           <nav className="app-nav" aria-label="Main navigation">
             <NavLink to="/employees">Employees</NavLink>
             <NavLink to={{ pathname: "/insights", search: onInsights ? search : lastInsightsSearch }}>Insights</NavLink>
