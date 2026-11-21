@@ -27,3 +27,13 @@ AI drafted the query and API specs before implementing the directory. We verifie
 ## Phase B — Salary updates
 
 AI drafted the request specs and transaction service. We used the employee row lock to keep writes and revision-token checks together. A test on separate PostgreSQL connections verified that only one of two concurrent edits could save. We also forced the audit insert to fail and checked that current pay rolled back. Chrome verified form errors, stale-edit recovery, and updated pay in both the profile and directory.
+
+## Phase B — Compensation insights
+
+AI drafted the analytics query and tests around the hand-calculated US and India example. We checked that the median retains a half cent and that the report counts current pay once even when an employee has several revisions. Chrome verified that country filtering switches to INR and that a saved USD 1,000 raise changes the report total from USD 84,000 to USD 85,000.
+
+HR dashboard design review led to two charts using the existing app palette. The React implementation reads country spend and job-level pay ranges from the analytics API. We rebuilt the Rails-served frontend and confirmed its bundle includes both charts.
+
+## Phase B — Page URLs
+
+After feedback that a refresh returned to the directory, we added React Router for the directory, employee profiles, and Insights. Rails serves the app at each path. Insights uses query parameters to restore the report filters on refresh. The frontend build passed. The updated browser specs cover deep links, refresh, and browser history for review.

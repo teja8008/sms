@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-export default function useJson(url, fallbackError, refreshVersion = 0) {
+export default function useJson(url, fallbackError) {
   const [result, setResult] = useState(null);
   const [attempt, setAttempt] = useState(0);
-  const key = `${url}:${refreshVersion}:${attempt}`;
+  const key = `${url}:${attempt}`;
 
   useEffect(() => {
     const controller = new AbortController();

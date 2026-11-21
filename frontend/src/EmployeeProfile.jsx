@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
 import { countryName, formatDate, formatMoney } from "./format.js";
 import SalaryEditForm from "./SalaryEditForm.jsx";
 import useJson from "./useJson.js";
 
-export default function EmployeeProfile({ employeeId, onBack, onSalaryChanged }) {
+export default function EmployeeProfile({ employeeId }) {
+  const backLink = useRef(null);
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState("");
   const { data, loading, error, retry } = useJson(
@@ -11,11 +13,14 @@ export default function EmployeeProfile({ employeeId, onBack, onSalaryChanged })
     "Unable to load the employee profile. Please try again.",
   );
 
+  useEffect(() => {
+    backLink.current?.focus({ preventScroll: true });
+  }, []);
+
   function reloadSalary() {
     setEditing(false);
     setNotice("");
     retry();
-    onSalaryChanged();
   }
 
   function salarySaved() {
@@ -25,7 +30,7 @@ export default function EmployeeProfile({ employeeId, onBack, onSalaryChanged })
 
   return (
     <main className="workspace">
-      <button type="button" className="back-button" onClick={onBack} autoFocus>← Back to directory</button>
+      <Link ref={backLink} className="back-button" to="/employees" state={{ returnEmployeeId: employeeId }}>← Back to directory</Link>
       {notice && <p className="save-notice" role="status">{notice}</p>}
       {loading && <p role="status">Loading employee profile…</p>}
       {error && (

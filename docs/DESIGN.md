@@ -4,6 +4,8 @@
 
 Rails 8 provides the backend and JSON API. React components in `frontend/src/` use JSX for the directory, salary form, and insights. They call relative API URLs such as `/api/v1/employees`.
 
+React Router maps `/` to `/employees` and renders employee profiles at `/employees/:id` and reports at `/insights`. Rails serves the built React entry point at those paths so direct links and refreshes work. The Insights URL carries the country and department filters. The app keeps applied directory filters in memory when navigating between screens.
+
 **Local development.** Start PostgreSQL and run `bundle exec rails server` from the repository root. Run `npm run dev` from `frontend/` in a second terminal. Open Vite at `http://localhost:5173`. Vite proxies `/api` to Rails on port 3000.
 
 **Deployment.** In a build environment with Node.js and Ruby, run `npm --prefix frontend ci` and `npm --prefix frontend run build`. Vite writes versioned assets under `public/frontend/`. Start Rails with `bundle exec rails server -e production -b 0.0.0.0 -p "$PORT"`, using the port assigned by the host. Rails serves the built UI and API on one origin. Neon PostgreSQL stores the synthetic demo data and preserves reviewer edits across server restarts.
@@ -86,7 +88,7 @@ salary_revisions
 | `GET /api/v1/employees` | Case-insensitive substring search by name, email, or code through `q`. Combine `country`, `department`, and `job_level` filters in SQL. Return employees, pagination, and directory-wide filter options. |
 | `GET /api/v1/employees/:id` | Return current pay, hire date, the allowed salary effective dates, and revisions ordered by effective date, creation time, and ID, newest first. Return `latest_revision_id` as `null` when history is empty. |
 | `PATCH /api/v1/employees/:id/salary` | Accept JSON with `annual_salary` as a decimal string, `reason`, `effective_date` as YYYY-MM-DD, and `expected_revision_id` from the profile. Return the saved revision. |
-| `GET /api/v1/analytics` | Return filtered active headcount, spend, country breakdowns, and department/level ranges. |
+| `GET /api/v1/analytics` | Accept optional `country` and `department` filters. Return `summary`, `country_breakdown`, `department_level_ranges`, and report-wide `filter_options` for active employees. |
 
 The directory accepts `sort` values `name`, `employee_code`, `department`, and `job_level`, plus `direction=asc` or `desc`. The default is ascending name, and all sorts break ties by ascending employee ID. Pagination starts at page 1 with 25 records per page and accepts up to 100. Invalid sort or pagination parameters return 400. An unknown employee ID returns 404.
 
@@ -96,9 +98,9 @@ A stale token returns HTTP 409 and the form offers to reload the latest pay. Inv
 
 ## Money and reporting
 
-Store money as decimals and serialize amounts as strings in JSON. Validate salary input before Active Record rounds to cents. PostgreSQL rejects nonpositive pay and rates, including numeric `NaN`. For global spend, sum each active employee's local salary multiplied by its USD rate, then round the displayed total. Country rows carry local and USD figures. Department/level ranges use local currency within one country and USD across countries.
+Store money as decimals and serialize amounts as strings in JSON. Validate salary input before Active Record rounds to cents. PostgreSQL rejects nonpositive pay and rates, including numeric `NaN`. For global spend, sum each active employee's local salary multiplied by its USD rate, then round the displayed total. Country rows group by country and currency and carry local and USD figures. The summary and department/level ranges use local currency when an explicit country has one currency in the filtered results. They use USD when results span currencies or the report covers all countries.
 
-PostgreSQL computes counts, sums, and medians on the filtered rows. For example, a test group earning USD 60,000 and INR 2,000,000 at 0.012 USD per INR has USD 84,000 in spend and a USD 42,000 median. This checks both rate direction and the mean of the two middle salaries. An empty group has zero spend and no median.
+One PostgreSQL statement computes the report from current salary rows. The median averages the middle values selected by ascending and descending `percentile_disc` so the amount stays decimal even when the result falls between cents. For example, a test group earning USD 60,000 and INR 2,000,000 at 0.012 USD per INR has USD 84,000 in spend and a USD 42,000 median. An empty result has zero spend, a `null` median, and empty breakdowns.
 
 ## Verification and scale
 
@@ -107,3 +109,5 @@ Use hand-calculated RSpec fixtures for FX, medians, effective dates, stale edits
 The seed uses batches of 500. Each transaction inserts opening revisions for the employees returned by that batch's insert. On Windows with Ruby 4.0.9 and local PostgreSQL 18, the seed body took 2.09 seconds on a fresh database. The full `rails db:seed` command took 5.88 seconds on the first run and 5.19 seconds on the rerun, including Rails startup.
 
 With 10,000 seeded employees in the same environment, the median of five warm in-process Rails requests was 19.60 ms for 25 rows, 18.96 ms for 100 rows, 20.68 ms for an employee-code search, and 14.09 ms for combined country, department, and level filters. Each measured request used five employee queries for the count, page, and shared filter options.
+
+On the same 10,000-employee dataset, the median of five warm in-process Rails requests was 121.50 ms for unfiltered Insights and 76.92 ms with India and Engineering selected. Each request ran one report statement.

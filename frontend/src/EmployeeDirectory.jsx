@@ -1,8 +1,10 @@
-import { useId, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router";
 import { countryName, formatMoney } from "./format.js";
+import SelectFilter from "./SelectFilter.jsx";
 import useJson from "./useJson.js";
 
-const DEFAULT_FILTERS = { q: "", country: "", department: "", job_level: "", sort: "name", direction: "asc", page: 1 };
+export const DEFAULT_DIRECTORY_FILTERS = { q: "", country: "", department: "", job_level: "", sort: "name", direction: "asc", page: 1 };
 const EMPTY_OPTIONS = { countries: [], departments: [], job_levels: [] };
 const SORT_OPTIONS = [
   ["name:asc", "Name A–Z"],
@@ -14,29 +16,23 @@ const SORT_OPTIONS = [
 ];
 const countFormat = new Intl.NumberFormat("en-US");
 
-function SelectFilter({ label, all, options, value, onChange, format = (option) => option }) {
-  const id = useId();
-
-  return (
-    <div className="field">
-      <label htmlFor={id}>{label}</label>
-      <select id={id} value={value} onChange={(event) => onChange(event.target.value)}>
-        {all && <option value="">{all}</option>}
-        {options.map((option) => <option key={option} value={option}>{format(option)}</option>)}
-      </select>
-    </div>
-  );
-}
-
-export default function EmployeeDirectory({ onSelect, refreshVersion }) {
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+export default function EmployeeDirectory({ filters, setFilters }) {
+  const { state } = useLocation();
+  const returnEmployee = useRef(state?.returnEmployeeId);
+  const [search, setSearch] = useState(filters.q);
   const params = new URLSearchParams(Object.entries(filters).filter(([, value]) => value !== ""));
   const { data, loading, error, retry } = useJson(
-    `/api/v1/employees?${params}`, "Unable to load employees. Please try again.", refreshVersion,
+    `/api/v1/employees?${params}`, "Unable to load employees. Please try again.",
   );
   const options = data?.filter_options ?? EMPTY_OPTIONS;
   const hasFilters = [filters.q, filters.country, filters.department, filters.job_level].some(Boolean);
+
+  useEffect(() => {
+    if (loading || error || !returnEmployee.current) return;
+
+    document.getElementById(`employee-link-${returnEmployee.current}`)?.focus();
+    returnEmployee.current = null;
+  }, [loading, error]);
 
   function applyFilters(changes) {
     setFilters((current) => ({ ...current, ...changes, page: 1 }));
@@ -54,7 +50,7 @@ export default function EmployeeDirectory({ onSelect, refreshVersion }) {
 
   function clearFilters() {
     setSearch("");
-    setFilters(DEFAULT_FILTERS);
+    setFilters(DEFAULT_DIRECTORY_FILTERS);
   }
 
   function changePage(page) {
@@ -104,14 +100,14 @@ export default function EmployeeDirectory({ onSelect, refreshVersion }) {
           </div>
         )}
         {!loading && !error && (
-          <DirectoryResults data={data} hasFilters={hasFilters} onSelect={onSelect} onPageChange={changePage} />
+          <DirectoryResults data={data} hasFilters={hasFilters} onPageChange={changePage} />
         )}
       </section>
     </main>
   );
 }
 
-function DirectoryResults({ data, hasFilters, onSelect, onPageChange }) {
+function DirectoryResults({ data, hasFilters, onPageChange }) {
   const { employees, pagination } = data;
   const { page, per_page: perPage, total_count: totalCount, total_pages: totalPages } = pagination;
 
@@ -145,10 +141,10 @@ function DirectoryResults({ data, hasFilters, onSelect, onPageChange }) {
             {employees.map((employee) => (
               <tr key={employee.id}>
                 <td>
-                  <button type="button" className="employee-link" onClick={(event) => onSelect(employee.id, event.currentTarget)}
+                  <Link id={`employee-link-${employee.id}`} className="employee-link" to={`/employees/${employee.id}`}
                     aria-label={`View ${employee.full_name}, ${employee.employee_code}`}>
                     {employee.full_name}
-                  </button>
+                  </Link>
                   <span className="cell-secondary">{employee.employee_code}</span>
                 </td>
                 <td>{employee.department}<span className="cell-secondary">{employee.job_title}</span></td>
