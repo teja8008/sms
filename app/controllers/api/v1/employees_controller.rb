@@ -20,15 +20,40 @@ module Api
       end
 
       def show
-        employee = Employee.find(params[:id])
-        revisions = employee.salary_revisions.order(effective_date: :desc, created_at: :desc, id: :desc).to_a
-        profile = employee_payload(employee).merge(
-          "hired_on" => employee.hired_on.iso8601,
-          "latest_revision_id" => revisions.first&.id,
-          "salary_revisions" => revisions.map { |revision| revision_payload(revision) }
-        )
+        profile = Employee.transaction do
+          # Read pay and its revision token together while salary writes are blocked.
+          employee = Employee.lock("FOR SHARE").find(params[:id])
+          revisions = employee.salary_revisions.newest_first.to_a
+          latest = revisions.first
+          employee_payload(employee).merge(
+            "hired_on" => employee.hired_on.iso8601,
+            "latest_revision_id" => latest&.id,
+            "salary_effective_dates" => {
+              "min" => (latest&.effective_date || employee.hired_on).iso8601,
+              "max" => Date.current.iso8601
+            },
+            "salary_revisions" => revisions.map { |revision| revision_payload(revision) }
+          )
+        end
 
         render json: { employee: profile }
+      end
+
+      def update_salary
+        unless request.media_type == "application/json"
+          return render json: { error: "Send the salary change as JSON." }, status: :unsupported_media_type
+        end
+
+        employee = Employee.find(params[:id])
+        attributes = ActionController::Parameters.new(request.request_parameters)
+          .permit(:annual_salary, :reason, :effective_date, :expected_revision_id).to_h.symbolize_keys
+        revision = UpdateEmployeeSalary.new(employee, attributes).call
+
+        render json: { salary_revision: revision_payload(revision) }
+      rescue UpdateEmployeeSalary::InvalidChange => error
+        render json: { error: error.message, fields: error.fields }, status: :unprocessable_content
+      rescue UpdateEmployeeSalary::StaleRevision => error
+        render json: { error: error.message }, status: :conflict
       end
 
       private

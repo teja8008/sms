@@ -84,13 +84,15 @@ salary_revisions
 | Route | Responsibility |
 | --- | --- |
 | `GET /api/v1/employees` | Case-insensitive substring search by name, email, or code through `q`. Combine `country`, `department`, and `job_level` filters in SQL. Return employees, pagination, and directory-wide filter options. |
-| `GET /api/v1/employees/:id` | Return the employee's current pay, hire date, and revisions ordered by effective date, creation time, and ID, newest first. Return `latest_revision_id` as `null` when history is empty. |
-| `PATCH /api/v1/employees/:id/salary` | Accept a decimal amount in the current currency, reason, effective date, and the revision ID the editor saw. |
+| `GET /api/v1/employees/:id` | Return current pay, hire date, the allowed salary effective dates, and revisions ordered by effective date, creation time, and ID, newest first. Return `latest_revision_id` as `null` when history is empty. |
+| `PATCH /api/v1/employees/:id/salary` | Accept JSON with `annual_salary` as a decimal string, `reason`, `effective_date` as YYYY-MM-DD, and `expected_revision_id` from the profile. Return the saved revision. |
 | `GET /api/v1/analytics` | Return filtered active headcount, spend, country breakdowns, and department/level ranges. |
 
 The directory accepts `sort` values `name`, `employee_code`, `department`, and `job_level`, plus `direction=asc` or `desc`. The default is ascending name, and all sorts break ties by ascending employee ID. Pagination starts at page 1 with 25 records per page and accepts up to 100. Invalid sort or pagination parameters return 400. An unknown employee ID returns 404.
 
-The salary write locks the employee row, checks the revision ID, validates the amount and date, then updates the employee and appends a revision in one transaction. A stale editor gets HTTP 409 and can reload the latest salary. Invalid input gets 422. A failed revision insert rolls back the salary update. Same-day revisions use creation time and ID to establish order.
+The profile reads pay and the revision token under a shared employee row lock. A salary write takes an exclusive lock, checks the token, and saves both the new pay and revision in a single transaction. Any failure rolls back the transaction. The employee keeps their current currency. The earliest effective date is the latest revision's effective date, or the hire date if the employee has no history. Both the earliest date and today's Rails application date are inclusive.
+
+A stale token returns HTTP 409 and the form offers to reload the latest pay. Invalid input returns 422 with field errors, and submitted values stay in the form. A successful save refreshes both the profile and directory.
 
 ## Money and reporting
 

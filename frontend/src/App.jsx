@@ -4,6 +4,7 @@ import EmployeeProfile from "./EmployeeProfile.jsx";
 
 export default function App() {
   const [employeeId, setEmployeeId] = useState(null);
+  const [directoryVersion, setDirectoryVersion] = useState(0);
   const profileTrigger = useRef(null);
 
   function openProfile(id, button) {
@@ -26,9 +27,12 @@ export default function App() {
         </div>
       </header>
       <div hidden={employeeId !== null}>
-        <EmployeeDirectory onSelect={openProfile} />
+        <EmployeeDirectory onSelect={openProfile} refreshVersion={directoryVersion} />
       </div>
-      {employeeId !== null && <EmployeeProfile employeeId={employeeId} onBack={closeProfile} />}
+      {employeeId !== null && (
+        <EmployeeProfile employeeId={employeeId} onBack={closeProfile}
+          onSalaryChanged={() => setDirectoryVersion((version) => version + 1)} />
+      )}
     </>
   );
 }

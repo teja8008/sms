@@ -1,15 +1,32 @@
+import { useState } from "react";
 import { countryName, formatDate, formatMoney } from "./format.js";
+import SalaryEditForm from "./SalaryEditForm.jsx";
 import useJson from "./useJson.js";
 
-export default function EmployeeProfile({ employeeId, onBack }) {
+export default function EmployeeProfile({ employeeId, onBack, onSalaryChanged }) {
+  const [editing, setEditing] = useState(false);
+  const [notice, setNotice] = useState("");
   const { data, loading, error, retry } = useJson(
     `/api/v1/employees/${employeeId}`,
     "Unable to load the employee profile. Please try again.",
   );
 
+  function reloadSalary() {
+    setEditing(false);
+    setNotice("");
+    retry();
+    onSalaryChanged();
+  }
+
+  function salarySaved() {
+    reloadSalary();
+    setNotice("Salary updated.");
+  }
+
   return (
     <main className="workspace">
       <button type="button" className="back-button" onClick={onBack} autoFocus>← Back to directory</button>
+      {notice && <p className="save-notice" role="status">{notice}</p>}
       {loading && <p role="status">Loading employee profile…</p>}
       {error && (
         <div role="alert">
@@ -17,12 +34,19 @@ export default function EmployeeProfile({ employeeId, onBack }) {
           <button type="button" className="secondary-button" onClick={retry}>Try again</button>
         </div>
       )}
-      {!loading && !error && <ProfileContent employee={data.employee} />}
+      {!loading && !error && (
+        <ProfileContent employee={data.employee} onEdit={() => { setNotice(""); setEditing(true); }}
+          salaryEditor={editing && (
+            <SalaryEditForm employee={data.employee} onCancel={() => setEditing(false)}
+              onSaved={salarySaved} onReload={reloadSalary} />
+          )}
+        />
+      )}
     </main>
   );
 }
 
-function ProfileContent({ employee }) {
+function ProfileContent({ employee, onEdit, salaryEditor }) {
   return (
     <>
       <div className="page-heading">
@@ -34,6 +58,7 @@ function ProfileContent({ employee }) {
           <span>Annual base salary</span>
           <strong>{formatMoney(employee.annual_salary, employee.currency_code)}</strong>
           <span className={`status status--${employee.status}`}>{employee.status}</span>
+          {!salaryEditor && <button type="button" className="secondary-button" onClick={onEdit}>Edit salary</button>}
         </div>
         <dl className="profile-facts">
           <div><dt>Email</dt><dd>{employee.email}</dd></div>
@@ -43,6 +68,7 @@ function ProfileContent({ employee }) {
           <div><dt>Hired on</dt><dd>{formatDate(employee.hired_on)}</dd></div>
         </dl>
       </section>
+      {salaryEditor}
       <section className="panel history-section" aria-labelledby="salary-history">
         <h2 id="salary-history">Salary history</h2>
         {employee.salary_revisions.length === 0 ? (

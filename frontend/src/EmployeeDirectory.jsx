@@ -28,11 +28,13 @@ function SelectFilter({ label, all, options, value, onChange, format = (option) 
   );
 }
 
-export default function EmployeeDirectory({ onSelect }) {
+export default function EmployeeDirectory({ onSelect, refreshVersion }) {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const params = new URLSearchParams(Object.entries(filters).filter(([, value]) => value !== ""));
-  const { data, loading, error, retry } = useJson(`/api/v1/employees?${params}`, "Unable to load employees. Please try again.");
+  const { data, loading, error, retry } = useJson(
+    `/api/v1/employees?${params}`, "Unable to load employees. Please try again.", refreshVersion,
+  );
   const options = data?.filter_options ?? EMPTY_OPTIONS;
   const hasFilters = [filters.q, filters.country, filters.department, filters.job_level].some(Boolean);
 

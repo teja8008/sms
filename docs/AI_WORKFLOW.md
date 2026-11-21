@@ -23,3 +23,7 @@ AI drafted the batched seed and its tests. We used PostgreSQL's returned rows to
 ## Phase B — Employee directory
 
 AI drafted the query and API specs before implementing the directory. We verified that search treats wildcard characters literally and that equal names retain a stable order across pages. The browser test checked search, filtering, salary history, and the return to the same results. With 10,000 employees, the 25-row and 100-row pages both used five employee queries.
+
+## Phase B — Salary updates
+
+AI drafted the request specs and transaction service. We used the employee row lock to keep writes and revision-token checks together. A test on separate PostgreSQL connections verified that only one of two concurrent edits could save. We also forced the audit insert to fail and checked that current pay rolled back. Chrome verified form errors, stale-edit recovery, and updated pay in both the profile and directory.

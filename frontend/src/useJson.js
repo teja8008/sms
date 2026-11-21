@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
-export default function useJson(url, fallbackError) {
+export default function useJson(url, fallbackError, refreshVersion = 0) {
   const [result, setResult] = useState(null);
   const [attempt, setAttempt] = useState(0);
+  const key = `${url}:${refreshVersion}:${attempt}`;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -14,22 +15,22 @@ export default function useJson(url, fallbackError) {
         if (controller.signal.aborted) return;
 
         if (response.ok) {
-          setResult({ url, attempt, data: payload });
+          setResult({ key, data: payload });
         } else {
-          setResult((previous) => ({ url, attempt, data: previous?.data, error: payload.error || fallbackError }));
+          setResult((previous) => ({ key, data: previous?.data, error: payload.error || fallbackError }));
         }
       } catch {
         if (!controller.signal.aborted) {
-          setResult((previous) => ({ url, attempt, data: previous?.data, error: fallbackError }));
+          setResult((previous) => ({ key, data: previous?.data, error: fallbackError }));
         }
       }
     }
 
     load();
     return () => controller.abort();
-  }, [url, attempt, fallbackError]);
+  }, [url, key, fallbackError]);
 
-  const ready = result?.url === url && result.attempt === attempt;
+  const ready = result?.key === key;
 
   return {
     data: result?.data,

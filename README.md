@@ -1,6 +1,6 @@
 # ACME CompScope
 
-Employee salary management for ACME HR. Search the employee directory and open a profile to review annual base pay and salary history.
+Employee salary management for ACME HR. Search the directory, then open a profile to review or edit annual base pay and see the salary history.
 
 ## Run locally
 
@@ -55,7 +55,7 @@ bundle exec rubocop
 bundle exec rspec
 ```
 
-Run these commands from the repository root. The build writes to `public/frontend/`. The browser spec searches the compiled directory served by Rails and opens an employee's salary history. GitLab CI builds the same artifact, then runs RuboCop, PostgreSQL migrations, and RSpec with headless Chromium.
+Run these commands from the repository root. The build writes to `public/frontend/`. The browser specs exercise directory search, salary history, salary edits, and stale-edit recovery through Rails. GitLab CI builds the same artifact, then runs RuboCop, PostgreSQL migrations, and RSpec with headless Chromium.
 
 To preview the deployment layout locally, build the frontend and open <http://localhost:3000> with Rails running.
 
