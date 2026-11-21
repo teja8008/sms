@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: acme-compscope
+    runtime: ruby
+    plan: 0.5c-512mb
+    region: singapore
+    branch: main
+    autoDeployTrigger: checksPass
+    buildCommand: >-
+      bundle install &&
+      npm --prefix frontend ci --include=dev &&
+      npm --prefix frontend run build
+    preDeployCommand: bundle exec rails db:migrate
+    startCommand: bundle exec rails server -b 0.0.0.0 -p "$PORT"
+    healthCheckPath: /up
+    envVars:
+      - key: NODE_VERSION
+        value: "22.15.0"
+      - key: BUNDLE_FROZEN
+        value: "true"
+      - key: BUNDLE_WITHOUT
+        value: development:test
+      - key: RAILS_ENV
+        value: production
+      - key: SECRET_KEY_BASE
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false

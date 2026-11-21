@@ -37,3 +37,9 @@ HR dashboard design review led to two charts using the existing app palette. The
 ## Phase B — Page URLs
 
 After feedback that a refresh returned to the directory, we added React Router for the directory, employee profiles, and Insights. Rails serves the app at each path. Insights uses query parameters to restore the report filters on refresh. The frontend build passed. The updated browser specs cover deep links, refresh, and browser history for review.
+
+## Phase C — Deployment rehearsal
+
+We drafted a Render Blueprint for one Rails service and a separate Neon demo database. The Blueprint passed Render's published schema. A local production rehearsal loaded 10,000 synthetic employees, served direct page URLs and compiled assets, and confirmed that a $1,000 raise and its audit entry persisted after restarting Rails. The rehearsal also exposed a schema dump during production migrations, so we disabled production schema dumps.
+
+We compared fresh development and production databases and verified that the seeded employee data matched. A seed rerun after the raise preserved the salary, its revision, and the total employee count. The release process seeds the demo database during initial setup and applies migrations before each deploy.

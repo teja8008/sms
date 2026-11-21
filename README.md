@@ -59,6 +59,13 @@ Run these commands from the repository root. The build writes to `public/fronten
 
 To preview the deployment layout locally, build the frontend and open <http://localhost:3000> with Rails running.
 
+## Deploy the demo
+
+1. Confirm CI passes on `main`. Create a Neon PostgreSQL project in Singapore for the synthetic demo data.
+2. In Render, create a Blueprint from the GitLab repository. [render.yaml](render.yaml) defines one paid Ruby web service in Singapore. Enter the Neon connection string with TLS as `DATABASE_URL` when prompted. Render generates `SECRET_KEY_BASE`.
+3. Render installs the locked dependencies, builds the React frontend, and runs `bundle exec rails db:migrate` before starting the service. Once the service is healthy, run `bundle exec rails db:seed` once in the Render shell to load the same 10,000 synthetic employees as local development.
+4. Open the assigned HTTPS URL. Verify `/up`, the directory, an employee profile, and a filtered Insights link. Add $1,000 to an active USD employee's annual salary and check the new revision, the $1,000 increase in global spend, and the baseline headcount. Restart the service and check the saved results again.
+
 ## Project documents
 
 - [Product requirements](docs/PRD.md)

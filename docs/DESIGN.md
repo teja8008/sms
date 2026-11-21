@@ -8,7 +8,26 @@ React Router maps `/` to `/employees` and renders employee profiles at `/employe
 
 **Local development.** Start PostgreSQL and run `bundle exec rails server` from the repository root. Run `npm run dev` from `frontend/` in a second terminal. Open Vite at `http://localhost:5173`. Vite proxies `/api` to Rails on port 3000.
 
-**Deployment.** In a build environment with Node.js and Ruby, run `npm --prefix frontend ci` and `npm --prefix frontend run build`. Vite writes versioned assets under `public/frontend/`. Start Rails with `bundle exec rails server -e production -b 0.0.0.0 -p "$PORT"`, using the port assigned by the host. Rails serves the built UI and API on one origin. Neon PostgreSQL stores the synthetic demo data and preserves reviewer edits across server restarts.
+**Deployment.** The [Render Blueprint](../render.yaml) defines one Ruby web service that builds the React frontend and runs migrations before each release. Rails serves Vite's compiled assets and the JSON API on one origin. The hosted assignment uses a dedicated Neon PostgreSQL database. Initial setup loads the same deterministic seed as development, and subsequent deploys preserve reviewer edits and salary revisions. [Deployment steps](../README.md#deploy-the-demo)
+
+### Local production rehearsal
+
+In a separate PowerShell terminal, set `DATABASE_URL` to a fresh local PostgreSQL database created for the rehearsal. Run these commands from the repository root.
+
+```powershell
+$env:RAILS_ENV = "production"
+$env:SECRET_KEY_BASE = ruby -rsecurerandom -e "puts SecureRandom.hex(64)"
+$env:BUNDLE_FROZEN = "true"
+$env:BUNDLE_WITHOUT = "development:test"
+bundle install
+npm.cmd --prefix frontend ci --include=dev
+npm.cmd --prefix frontend run build
+bundle exec rails db:migrate
+bundle exec rails db:seed
+bundle exec rails server -b 127.0.0.1 -p 3100
+```
+
+Use <http://127.0.0.1:3100> for the smoke check in the README. After the salary edit, stop Rails, rerun `bundle exec rails db:migrate`, and restart Rails against the same database to verify persistence across deploys. Close the terminal when finished so the rehearsal settings stay in that session.
 
 ## Data model
 
